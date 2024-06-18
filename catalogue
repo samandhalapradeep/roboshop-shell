@@ -1,0 +1,93 @@
+#!/bin/bash
+
+ID=$(id -u)   # root user or not
+R="\e[31m"    # colors indications red green yellow nrmal 
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+MONGODB_HOST=mongodb.pradeepstore.online
+
+TIMESTAMP=$(date +%F-%H-%M-%S) # indicated time and date 
+LOGFILE="/tmp/$0-$TIMESTAMP.log" # create log file for error validation and store all the content in tmp
+
+echo "script started executing at $TIMESTAMP" &>> $LOGFILE
+
+validate(){
+
+if [ $1 -ne 0 ]
+    then 
+    echo -e "$2...$R failed $N"
+else
+    echo -e "$2...$G success $N"
+fi 
+}
+if [ $ID -ne 0 ]
+then
+    echo -e "$R Error: please run the script with root access $N"
+    exit 1 # you can give other then 0
+else
+    echo " you are the root user"
+fi # fi means reverse of if condition end 
+
+dnf module disable nodejs -y &>> $LOGFILE
+
+validate $? "disabling current nodejs"
+
+dnf module enable nodejs:18 -y &>> $LOGFILE
+
+validate $? "enabling nodejs18"
+
+dnf install nodejs -y &>> $LOGFILE
+
+validate $? "installing nodejs"
+
+useradd roboshop 
+
+validate $? "creating roboshop user"
+
+mkdir /app
+
+validate $? "creating app directory"
+
+curl -o /tmp/catalogue.zip https://roboshop-builds.s3.amazonaws.com/catalogue.zip
+
+validate $? "downloading catalogue application"
+
+cd /app 
+
+unzip /tmp/catalogue.zip
+
+validate $? "unzipping catalogue application"
+
+npm install 
+
+validate $? "installing dependencies"
+
+# use absolute path location, because catalogue path exists there
+cp /home/centos/roboshop-shell/catalogue-service /etc/systemd/system/catalogue.service
+
+validate $? "coping cataogue service file"
+
+systemctl daemon-reload
+
+validate $? " catalogue daemon reload"
+
+systemctl enable catalogue
+
+validate $? "enabling catalogue"
+
+systemctl start catalogue
+
+validate $? "starting catalogue"
+
+cp /home/centos/roboshop-shell/mongodb-repo /etc/yum.repos.d/mongo.repo
+
+validate $? "copying mongodb repo"
+
+dnf install mongodb-org-shell -y &>> $LOGFILE
+
+validate $? " installing mongodb clint"
+
+mongo --host $MONGODB_HOST </app/schema/catalogue.js
+
+validate $? "loading catalogue data into mongodb"
