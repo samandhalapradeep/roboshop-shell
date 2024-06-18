@@ -51,8 +51,6 @@ else
     echo -e "roboshop user already exists $Y skipping $N"
 fi
 
-validate $? "creating roboshop user"
-
 mkdir -p /app
 
 validate $? "creating app directory"
