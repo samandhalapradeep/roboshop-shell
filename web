@@ -5,6 +5,7 @@ R="\e[31m"    # colors indications red green yellow nrmal
 G="\e[32m"
 Y="\e[33m"
 N="\e[0m"
+MONGODB_HOST=mongodb.pradeepstore.online
 
 TIMESTAMP=$(date +%F-%H-%M-%S) # indicated time and date 
 LOGFILE="/tmp/$0-$TIMESTAMP.log" # create log file for error validation and store all the content in tmp
