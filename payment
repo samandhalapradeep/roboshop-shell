@@ -1,0 +1,79 @@
+#!/bin/bash
+
+ID=$(id -u)   # root user or not
+R="\e[31m"    # colors indications red green yellow nrmal 
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+MONGODB_HOST=mongodb.pradeepstore.online
+
+TIMESTAMP=$(date +%F-%H-%M-%S) # indicated time and date 
+LOGFILE="/tmp/$0-$TIMESTAMP.log" # create log file for error validation and store all the content in tmp
+
+echo "script started executing at $TIMESTAMP" &>> $LOGFILE
+
+validate(){
+
+if [ $1 -ne 0 ]
+    then 
+    echo -e "$2...$R failed $N"
+    exit 1
+else
+    echo -e "$2...$G success $N"
+fi 
+}
+if [ $ID -ne 0 ]
+then
+    echo -e "$R Error: please run the script with root access $N"
+    exit 1 # you can give other then 0
+else
+    echo " you are the root user"
+fi # fi means reverse of if condition end 
+
+dnf install python36 gcc python3-devel -y &>> $LOGFILE
+
+id roboshop 
+if [ $? -ne 0 ]
+  then
+    useradd roboshop
+validate $? "roboshop user creation"
+else
+    echo -e "roboshop user already exists $Y skipping $N"
+fi
+
+mkdir -p /app
+
+validate $? "creating app directory"
+
+curl -L -o /tmp/payment.zip https://roboshop-builds.s3.amazonaws.com/payment.zip &>> $LOGFILE
+
+validate $? "downloading payment"
+
+cd /app 
+
+validate $? "moving to app directory"
+
+unzip -o /tmp/payment.zip
+
+validate $? "unzipping payment"
+
+pip3.6 install -r requirements.txt
+
+validate $? " installing dependencies"
+
+cp /home/centos/roboshop-shell/payment-service /etc/systemd/system/payment.service
+
+validate $? " copying payment servie"
+
+systemctl daemon-reload
+
+validate $? "daemon reloading"
+
+systemctl enable payment 
+
+validate $? "enabling payment"
+
+systemctl start payment
+
+validate $? "starting payment"
+
