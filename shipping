@@ -45,7 +45,7 @@ mkdir -p /app
 
 validate $? "creating app directory"
 
-curl -L -o /tmp/shipping.zip https://roboshop-builds.s3.amazonaws.com/shipping.zip
+curl -L -o /tmp/shipping.zip https://roboshop-builds.s3.amazonaws.com/shipping.zip &>> $LOGFILE
 
 validate $? "downloading shipping"
 
@@ -53,31 +53,31 @@ cd /app
 
 validate $? "moving to app directory"
 
-unzip -o /tmp/shipping.zip
+unzip -o /tmp/shipping.zip &>> $LOGFILE
 
 validate $? "unzipping shipping"
 
-mvn clean package
+mvn clean package &>> $LOGFILE
 
 validate $? "installing dependencies"
 
-mv target/shipping-1.0.jar shipping.jar
+mv target/shipping-1.0.jar shipping.jar &>> $LOGFILE
 
 validate $? "renaming jarfile"
 
-cp /home/centos/roboshop-shell/shipping-service /etc/systemd/system/shipping.service
+cp /home/centos/roboshop-shell/shipping-service /etc/systemd/system/shipping.service &>> $LOGFILE
 
 validate $? "copying shipping services"
 
-systemctl daemon-reload
+systemctl daemon-reload &>> $LOGFILE
 
 validate $? "daemon reload"
 
-systemctl enable shipping 
+systemctl enable shipping &>> $LOGFILE
 
 validate $? "enabling shipping"
 
-systemctl start shipping
+systemctl start shipping &>> $LOGFILE
 
 validate $? "starting shipping"
 
@@ -85,10 +85,10 @@ dnf install mysql -y &>> $LOGFILE
 
 validate $? "installing mysql clint"
 
-mysql -h mysql.pradeepstore.online -uroot -pRoboShop@1 < /app/schema/shipping.sql 
+mysql -h mysql.pradeepstore.online -uroot -pRoboShop@1 < /app/schema/shipping.sql &>> $LOGFILE
 
 validate $? "loading shipping data"
 
-systemctl restart shipping
+systemctl restart shipping &>> $LOGFILE
 
 validate $? "restarting shipping"
