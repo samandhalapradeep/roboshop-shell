@@ -41,7 +41,7 @@ else
     echo -e "roboshop user already exists $Y skipping $N"
 fi
 
-mkdir -p /app
+mkdir -p /app &>> $LOGFILE
 
 validate $? "creating app directory"
 
@@ -53,27 +53,27 @@ cd /app
 
 validate $? "moving to app directory"
 
-unzip -o /tmp/payment.zip
+unzip -o /tmp/payment.zip &>> $LOGFILE
 
 validate $? "unzipping payment"
 
-pip3.6 install -r requirements.txt
+pip3.6 install -r requirements.txt &>> $LOGFILE
 
 validate $? " installing dependencies"
 
-cp /home/centos/roboshop-shell/payment-service /etc/systemd/system/payment.service
+cp /home/centos/roboshop-shell/payment-service /etc/systemd/system/payment.service &>> $LOGFILE
 
 validate $? " copying payment servie"
 
-systemctl daemon-reload
+systemctl daemon-reload &>> $LOGFILE
 
 validate $? "daemon reloading"
 
-systemctl enable payment 
+systemctl enable payment &>> $LOGFILE
 
 validate $? "enabling payment"
 
-systemctl start payment
+systemctl start payment &>> $LOGFILE
 
 validate $? "starting payment"
 
