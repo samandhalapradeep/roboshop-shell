@@ -1,0 +1,94 @@
+#!/bin/bash
+
+ID=$(id -u)   # root user or not
+R="\e[31m"    # colors indications red green yellow nrmal 
+G="\e[32m"
+Y="\e[33m"
+N="\e[0m"
+MONGODB_HOST=mongodb.pradeepstore.online
+
+TIMESTAMP=$(date +%F-%H-%M-%S) # indicated time and date 
+LOGFILE="/tmp/$0-$TIMESTAMP.log" # create log file for error validation and store all the content in tmp
+
+echo "script started executing at $TIMESTAMP" &>> $LOGFILE
+
+validate(){
+
+if [ $1 -ne 0 ]
+    then 
+    echo -e "$2...$R failed $N"
+    exit 1
+else
+    echo -e "$2...$G success $N"
+fi 
+}
+if [ $ID -ne 0 ]
+then
+    echo -e "$R Error: please run the script with root access $N"
+    exit 1 # you can give other then 0
+else
+    echo " you are the root user"
+fi # fi means reverse of if condition end 
+
+dnf install maven -y &>> $LOGFILE
+
+id roboshop 
+if [ $? -ne 0 ]
+  then
+    useradd roboshop
+validate $? "roboshop user creation"
+else
+    echo -e "roboshop user already exists $Y skipping $N"
+fi
+
+mkdir -p /app
+
+validate $? "creating app directory"
+
+curl -L -o /tmp/shipping.zip https://roboshop-builds.s3.amazonaws.com/shipping.zip
+
+validate $? "downloading shipping"
+
+cd /app
+
+validate $? "moving to app directory"
+
+unzip -o /tmp/shipping.zip
+
+validate $? "unzipping shipping"
+
+mvn clean package
+
+validate $? "installing dependencies"
+
+mv target/shipping-1.0.jar shipping.jar
+
+validate $? "renaming jarfile"
+
+cp /home/centos/roboshop-shell/shipping-service /etc/systemd/system/shipping.service
+
+validate $? "copying shipping services"
+
+systemctl daemon-reload
+
+validate $? "daemon reload"
+
+systemctl enable shipping 
+
+validate $? "enabling shipping"
+
+systemctl start shipping
+
+validate $? "starting shipping"
+
+dnf install mysql -y &>> $LOGFILE
+
+validate $? "installing mysql clint"
+
+mysql -h mysql.pradeepstore.online -uroot -pRoboShop@1 < /app/schema/shipping.sql 
+
+validate $? "loading shipping data"
+
+systemctl restart shipping
+
+validate $? "restarting shipping"
